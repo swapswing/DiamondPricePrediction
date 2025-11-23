@@ -1,17 +1,28 @@
 import streamlit as st
 import numpy as np
 import pickle
+import os
 
 st.set_page_config(page_title="Diamond Input Form", layout="centered")
 
-# Load model from model.pkl
-@st.cache_resource  # cache so it loads only once [web:61][web:64]
+# Load model from model.pkl with error handling
+@st.cache_resource  # cache so it loads only once
 def load_model():
-    with open("model.pkl", "rb") as f:
-        model = pickle.load(f)
-    return model
+    model_path = "model.pkl"
+    if not os.path.exists(model_path):
+        st.error(f"Model file not found: {model_path}")
+        return None
+    try:
+        with open(model_path, "rb") as f:
+            model = pickle.load(f)
+        return model
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None
 
 model = load_model()
+if model is None:
+    st.stop()  # Stop further execution if model loading fails
 
 st.title("Diamond Features Input Form")
 
@@ -78,9 +89,9 @@ if submitted:
             color_map[color],
             clarity_map[clarity],
         ]]
-    )  # shape (1, n_features) for sklearn predict [web:66][web:77]
+    )  # shape (1, n_features) for sklearn predict
 
-    price = model.predict(features)[0]  # single prediction [web:69][web:77]
+    price = model.predict(features)[0]  # single prediction
 
     st.write(
         {
